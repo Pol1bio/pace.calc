@@ -5,13 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Passo">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#eef2f5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0e161c" media="(prefers-color-scheme: dark)">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Calcolatore Tempo e Passo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,17 +115,6 @@ button { font-family: var(--body); cursor: pointer; }
 
 [hidden] { display: none !important; }
 .card h3 { font-family: var(--display); font-size: 16px; font-weight: 600; margin: 0; }
-.eq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.eq .res .mini { font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.fold summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; cursor: pointer; list-style: none; font-family: var(--display); font-size: 18px; font-weight: 600; border-radius: 8px; }
-.fold summary::-webkit-details-marker { display: none; }
-.fold summary::after { content: ""; width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin: -4px 6px 0 0; }
-.fold[open] summary::after { transform: rotate(-135deg); margin: 4px 6px 0 0; }
-.fold summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.times { display: flex; flex-direction: column; }
-.times .tr { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-.times .tr:last-child { border-bottom: 0; }
-.times .tr b { font-family: var(--display); font-size: 22px; font-weight: 600; }
 .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: var(--field); border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
 .seg button { height: 40px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-size: 15px; font-weight: 600; }
 .seg button[aria-checked="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 0 0 1px var(--line); }
@@ -161,6 +143,21 @@ button { font-family: var(--body); cursor: pointer; }
 .hrow b { font-family: var(--display); font-size: 22px; font-weight: 600; }
 .link { border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 14px; padding: 10px 0; border-radius: 8px; }
 
+.tab.pace { height: 100%; min-height: 490px; gap: 8px; padding-bottom: 12px; }
+.pace .card { padding: 10px 12px; gap: 8px; }
+.crow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 8px; }
+.eq1 { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; color: var(--muted); }
+.eq1 b { font-family: var(--display); font-size: 24px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tcard { flex: 1; min-height: 0; }
+.tg { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(30px, 1fr); column-gap: 18px; }
+.tc { display: flex; justify-content: space-between; align-items: center; gap: 6px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.tc:nth-last-child(-n+2) { border-bottom: 0; }
+.tc span { font-size: 14px; color: var(--muted); }
+.tc b { font-family: var(--display); font-size: 21px; font-weight: 600; }
+.srow { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+.solve .result { padding: 6px 12px; }
+.solve .result .big { display: block; font-size: 28px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.solve .result .sub { display: block; font-size: 13px; line-height: 18px; min-height: 18px; }
 .tab.calc { height: 100%; min-height: 470px; gap: 10px; padding-bottom: 12px; }
 .calc .top { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; position: relative; }
 .calc .result { flex: none; position: relative; height: 92px; padding: 8px 54px 8px 14px; justify-content: center; gap: 2px; }
@@ -195,64 +192,51 @@ nav button svg { width: 22px; height: 22px; stroke: currentColor; fill: none; st
 nav button[aria-selected="true"] { background: var(--field); color: var(--accent); }
 @media (prefers-reduced-motion: no-preference) { button { transition: background .15s, color .15s; } }
 </style>
+<meta name="apple-mobile-web-app-title" content="Passo">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
 <main>
   <!-- PASSO -->
-  <section id="tab-passo" class="tab" aria-label="Passo e velocità">
-    <div class="card">
-      <h2>Passo e velocità</h2>
-      <div class="fld">
-        <label for="pc-min" class="left">Passo (min/km)</label>
-        <div class="pair">
-          <input type="text" id="pc-min" inputmode="numeric" autocomplete="off" placeholder="min" aria-label="Minuti per chilometro">
-          <input type="text" id="pc-sec" inputmode="decimal" autocomplete="off" placeholder="sec (anche decimi)" aria-label="Secondi per chilometro, anche con decimali">
+  <section id="tab-passo" class="tab pace" aria-label="Passo e velocità">
+    <div class="card conv">
+      <div class="crow">
+        <div class="fld">
+          <label for="pc-min">Passo min/km</label>
+          <div class="pair">
+            <input type="text" id="pc-min" inputmode="numeric" autocomplete="off" placeholder="min" aria-label="Minuti per chilometro">
+            <input type="text" id="pc-sec" inputmode="decimal" autocomplete="off" placeholder="sec" aria-label="Secondi per chilometro, anche con decimali">
+          </div>
+        </div>
+        <div class="fld">
+          <label for="pc-kmh">km/h</label>
+          <input type="text" id="pc-kmh" inputmode="decimal" autocomplete="off" placeholder="km/h">
         </div>
       </div>
-      <div class="arrow" aria-hidden="true">⇅</div>
-      <div class="fld">
-        <label for="pc-kmh" class="left">Velocità (km/h)</label>
-        <input type="text" id="pc-kmh" inputmode="decimal" autocomplete="off" placeholder="km/h">
-      </div>
-      <div class="eq" aria-live="polite">
-        <div class="res"><span class="lab">Passo (min/mi)</span><span class="mini" id="eq-mi"></span></div>
-        <div class="res"><span class="lab">Velocità (mph)</span><span class="mini" id="eq-mph"></span></div>
-      </div>
-      <hr class="sep">
-      <details class="fold">
-        <summary>Tempi a questo passo</summary>
-        <div class="times" id="pc-table" aria-live="polite"></div>
-      </details>
+      <div class="eq1" aria-live="polite"><span><b id="eq-mi">—</b> min/mi</span><span><b id="eq-mph">—</b> mph</span></div>
     </div>
 
-    <div class="card">
-      <h2>Calcola da distanza</h2>
+    <div class="card tcard"><div class="tg" id="pc-table" aria-live="polite"></div></div>
+
+    <div class="card solve">
       <div class="seg" role="radiogroup" aria-label="Cosa vuoi calcolare">
         <button type="button" role="radio" data-solve="tempo" aria-checked="true">Tempo</button>
         <button type="button" role="radio" data-solve="passo" aria-checked="false">Passo</button>
         <button type="button" role="radio" data-solve="distanza" aria-checked="false">Distanza</button>
       </div>
-      <div class="fld" id="g-dist">
-        <label for="sd-km" class="left">Distanza (km)</label>
-        <input type="text" id="sd-km" inputmode="decimal" autocomplete="off" placeholder="10">
+      <div class="srow">
+        <div class="fld" data-g="dist"><label for="sd-km">km</label><input type="text" id="sd-km" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+        <div class="fld" data-g="time"><label for="sd-h">ore</label><input type="text" id="sd-h" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+        <div class="fld" data-g="time"><label for="sd-m">min</label><input type="text" id="sd-m" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+        <div class="fld" data-g="time"><label for="sd-s">sec</label><input type="text" id="sd-s" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+        <div class="fld" data-g="pace"><label for="sp-min">min/km</label><input type="text" id="sp-min" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+        <div class="fld" data-g="pace"><label for="sp-sec">sec</label><input type="text" id="sp-sec" inputmode="decimal" autocomplete="off" placeholder="0"></div>
       </div>
-      <div class="fld" id="g-time">
-        <label class="left" for="sd-h">Tempo</label>
-        <div class="trio">
-          <input type="text" id="sd-h" inputmode="numeric" autocomplete="off" placeholder="ore" aria-label="Ore">
-          <input type="text" id="sd-m" inputmode="numeric" autocomplete="off" placeholder="min" aria-label="Minuti">
-          <input type="text" id="sd-s" inputmode="decimal" autocomplete="off" placeholder="sec" aria-label="Secondi">
-        </div>
-      </div>
-      <div class="fld" id="g-pace">
-        <label class="left" for="sp-min">Passo (min/km)</label>
-        <div class="pair">
-          <input type="text" id="sp-min" inputmode="numeric" autocomplete="off" placeholder="min" aria-label="Minuti per chilometro">
-          <input type="text" id="sp-sec" inputmode="decimal" autocomplete="off" placeholder="sec" aria-label="Secondi per chilometro">
-        </div>
-      </div>
-      <div class="result" style="border-left-width:1px" aria-live="polite">
-        <div class="res"><span class="lab" id="sv-lab"></span><span class="big" id="sv-big"></span><span class="sub" id="sv-sub"></span></div>
+      <div class="result" aria-live="polite">
+        <div class="res"><span class="big" id="sv-big">—</span><span class="sub" id="sv-sub"></span></div>
       </div>
     </div>
   </section>
@@ -574,13 +558,13 @@ renderCalc();
 
 // Passo <-> velocità, equivalenti in miglia e tabella delle distanze
 const pcMin = $('#pc-min'), pcSec = $('#pc-sec'), pcKmh = $('#pc-kmh');
-const DIST = [['400 m', 0.4], ['1 km', 1], ['1 miglio', MI], ['5 km', 5], ['10 km', 10], ['Mezza maratona', 21.0975], ['Maratona', 42.195]];
+const DIST = [['400 m', 0.4], ['1 km', 1], ['1 miglio', MI], ['3 km', 3], ['5 km', 5], ['10 km', 10], ['Mezza', 21.0975], ['Maratona', 42.195]];
 let exactPace = 0;                                   // secondi/km senza arrotondamenti
 function renderPace() {
   const p = exactPace, v = speedFromPace(p), ok = p > 0;
   $('#eq-mi').textContent = ok ? fmtPace(p * MI) : '—';
   $('#eq-mph').textContent = ok ? fmtDec(v / MI, 2) : '—';
-  $('#pc-table').innerHTML = DIST.map(([n, d]) => `<div class="tr"><span>${n}</span><b>${ok ? fmtHms(d * p) : '—'}</b></div>`).join('');
+  $('#pc-table').innerHTML = DIST.map(([n, d]) => `<div class="tc"><span>${n}</span><b>${ok ? fmtHms(d * p) : '—'}</b></div>`).join('');
 }
 function fromPace() {
   const p = num(pcMin.value) * 60 + num(pcSec.value);
@@ -605,23 +589,19 @@ pcMin.value = '5'; pcSec.value = '30'; fromPace();
 let solve = 'tempo';
 const sd = ['#sd-km', '#sd-h', '#sd-m', '#sd-s', '#sp-min', '#sp-sec'].map($);
 function calcSolve() {
-  $('#g-dist').hidden = solve === 'distanza';
-  $('#g-time').hidden = solve === 'tempo';
-  $('#g-pace').hidden = solve === 'passo';
+  const off = solve === 'tempo' ? 'time' : solve === 'passo' ? 'pace' : 'dist';
+  document.querySelectorAll('.srow [data-g]').forEach(el => { el.hidden = el.dataset.g === off; });
   const d = num(sd[0].value), T = num(sd[1].value) * 3600 + num(sd[2].value) * 60 + num(sd[3].value);
   const p = num(sd[4].value) * 60 + num(sd[5].value);
-  let lab = '', big = '—', sub = '';
+  let big = '—', sub = '';
   if (solve === 'tempo') {
-    lab = 'Tempo';
     if (d > 0 && p > 0) { big = fmtMs(d * p * 1000); sub = fmtDec(speedFromPace(p), 2) + ' km/h'; }
   } else if (solve === 'passo') {
-    lab = 'Passo';
     if (d > 0 && T > 0) { const q = T / d; big = fmtPace(q, '/km'); sub = fmtDec(speedFromPace(q), 2) + ' km/h · ' + fmtPace(q * MI, '/mi'); }
   } else {
-    lab = 'Distanza';
     if (T > 0 && p > 0) { const x = T / p; big = fmtDec(x, 3) + ' km'; sub = fmtDec(x / MI, 3) + ' mi · ' + fmtDec(x * 1000, 0) + ' m'; }
   }
-  $('#sv-lab').textContent = lab; $('#sv-big').textContent = big; $('#sv-sub').textContent = sub;
+  $('#sv-big').textContent = big; $('#sv-sub').textContent = sub;
 }
 sd.forEach(i => i.addEventListener('input', calcSolve));
 document.querySelectorAll('.seg button[data-solve]').forEach(b => b.addEventListener('click', () => {
@@ -646,9 +626,7 @@ window.addEventListener('hashchange', () => view(location.hash.slice(1)));
 view(location.hash.slice(1));
 </script>
 <script>
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
-}
+if ('serviceWorker' in navigator && location.protocol !== 'file:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
 </body>
 </html>
