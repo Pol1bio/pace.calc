@@ -124,10 +124,14 @@ button { font-family: var(--body); cursor: pointer; }
 .res .err:empty { display: none; }
 .expr { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; min-height: 68px; max-height: 128px; overflow-y: auto; font-family: var(--display); font-size: 26px; font-weight: 500; line-height: 1.35; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .expr .muted { color: var(--muted); font-family: var(--body); font-size: 16px; font-weight: 400; }
-.expr .tk { white-space: nowrap; }
-.expr .xo { color: var(--accent); font-weight: 700; margin: 0 .3em; }
-.expr .xp { color: var(--muted); }
+.expr .tk { white-space: nowrap; padding: 0 2px; }
+.expr .xo { color: var(--accent); font-weight: 700; padding: 0 .4em; }
+.expr .xp { color: var(--muted); padding: 0 .15em; }
 .expr .pend { color: var(--accent); }
+.expr [data-i] { cursor: pointer; }
+.expr .tk.cur { border-bottom: 2px solid var(--accent); }
+.expr .caret { display: inline-block; width: 2px; height: 1.05em; margin: 0 2px -.15em; background: var(--accent); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
 .expr .sfx { color: var(--muted); opacity: .6; margin-left: 1px; }
 .pad { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .k { height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-family: var(--display); font-size: 24px; font-weight: 600; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
@@ -307,13 +311,15 @@ const classOf = u => TIME_U.includes(u) ? 'time' : 'dist';
 const NAME = { time: 'tempo', dist: 'distanza', pace: 'passo', num: 'numero' };
 const OPSYM = { '+': '+', '-': '−', '*': '×', '/': '÷' };
 const newCur = () => ({ buf: '', fields: {}, order: [], pace: false });
-const newCalc = () => ({ items: [], cur: newCur(), last: null, done: false, err: '', history: [] });
+const newCalc = () => ({ items: [], tail: [], cur: newCur(), last: null, done: false, err: '', history: [] });
 const cloneCur = c => ({ buf: c.buf, fields: { ...c.fields }, order: [...c.order], pace: c.pace });
 const curEmpty = c => c.buf === '' && !c.order.length;
 const curClass = c => c.order.length ? classOf(c.order[0]) : null;
 const lastItem = st => st.items[st.items.length - 1];
 const depth = st => st.items.reduce((d, it) => d + (it.k === 'lp' ? 1 : it.k === 'rp' ? -1 : 0), 0);
 const isValueEnd = it => !!it && (it.k === 'v' || it.k === 'rp');
+const startsValue = st => !!st.tail[0] && (st.tail[0].k === 'v' || st.tail[0].k === 'lp');   // dopo il cursore comincia un valore
+const blockedBefore = st => curEmpty(st.cur) && (isValueEnd(lastItem(st)) || startsValue(st));
 function nextUnitOf(c) {                      // dove vanno le cifre scritte dopo un'unità, senza tasto unità
   const list = curClass(c) === 'dist' ? DIST_U : TIME_U;
   return list[Math.min(list.indexOf(c.order[c.order.length - 1]) + 1, list.length - 1)];
@@ -389,6 +395,7 @@ function evaluate(arr) {                       // arr: [{k:'v',t,v} | {k:'op',op
 }
 function buildPreview(st) {                    // espressione "completata": ultimo valore, senza operatori finali, parentesi chiuse
   const arr = st.items.slice(); const tok = closeCur(st.cur); if (tok) arr.push(tok);
+  arr.push(...st.tail);
   while (arr.length && (arr[arr.length - 1].k === 'op' || arr[arr.length - 1].k === 'lp')) arr.pop();
   if (!arr.length) return null;
   let open = 0; arr.forEach(it => { if (it.k === 'lp') open++; else if (it.k === 'rp') open--; });
@@ -409,7 +416,7 @@ function exprText(arr) {
 
 function pressDigit(st, d) {                   // d: '0'-'9' oppure ','
   const c = st.cur;
-  if (c.pace || (curEmpty(c) && isValueEnd(lastItem(st)))) return;
+  if (c.pace || blockedBefore(st)) return;
   const lastGroup = c.buf.split(':').pop();
   if (d === ',') { if (lastGroup.includes(',')) return; c.buf += lastGroup === '' ? '0,' : ','; return; }
   if (c.buf.replace(/[,:]/g, '').length >= 9) return;
@@ -438,7 +445,7 @@ function pressOp(st, op) {
   const tok = closeCur(st.cur);
   if (tok) { st.items.push(tok); st.cur = newCur(); }
   if (!st.items.length) {                      // operatore all'inizio: riparte dall'ultimo risultato
-    if (!st.last) return;
+    if (!st.last || st.tail.length) return;
     st.items.push({ k: 'v', t: st.last.res.t, v: st.last.res.v, text: formatRes(st.last.res), src: null });
   }
   const last = lastItem(st);
@@ -454,11 +461,11 @@ function pressRP(st) {
   if (depth(st) <= 0) return;
   const tok = closeCur(st.cur);
   if (tok) { st.items.push(tok); st.cur = newCur(); }
-  if (!isValueEnd(lastItem(st))) return;
+  if (!isValueEnd(lastItem(st)) || startsValue(st)) return;
   st.items.push({ k: 'rp' });
 }
 function pressAns(st, res) {
-  if (!res || !curEmpty(st.cur) || isValueEnd(lastItem(st))) return;
+  if (!res || blockedBefore(st)) return;
   st.items.push({ k: 'v', t: res.t, v: res.v, text: formatRes(res), src: null });
 }
 function pressBack(st) {                       // cifra, poi parte del passo, poi unità, poi l'elemento precedente
@@ -476,12 +483,24 @@ function pressEq(st) {
   const text = exprText(pv.arr);
   st.last = { text, res: pv.res };
   st.history.unshift(st.last); st.history.length = Math.min(st.history.length, 8);
-  st.items = []; st.cur = newCur(); st.done = true;
+  st.items = []; st.tail = []; st.cur = newCur(); st.done = true;
+}
+function moveCaret(st, i, side) {              // tocco sull'espressione: i = posizione nella lista completa, side 'l' o 'r'
+  const tok = closeCur(st.cur);
+  const L = st.items.concat(tok ? [tok] : [], st.tail);
+  const it = L[i]; if (!it) return;
+  st.cur = newCur();
+  if (it.k === 'v' && it.src && side === 'r') {   // un valore: si riapre per correggerlo
+    st.items = L.slice(0, i); st.cur = cloneCur(it.src); st.tail = L.slice(i + 1);
+  } else {
+    const at = side === 'l' ? i : i + 1;
+    st.items = L.slice(0, at); st.tail = L.slice(at);
+  }
 }
 function applyKey(st, k) {                     // un tasto del tastierino
   if (k !== 'eq') { st.done = false; st.err = ''; }
   if (k === 'back') pressBack(st);
-  else if (k === 'clear') { st.items = []; st.cur = newCur(); }
+  else if (k === 'clear') { st.items = []; st.tail = []; st.cur = newCur(); }
   else if (k === 'eq') pressEq(st);
   else if (k === 'ans') pressAns(st, st.last && st.last.res);
   else if (k === 'lp') pressLP(st);
@@ -519,19 +538,46 @@ function renderResult() {
 }
 function renderExpr() {
   const box = $('#expr'), c = calc.cur;
-  const parts = calc.items.map(it => it.k === 'v' ? `<span class="tk">${it.text}</span>` : it.k === 'op' ? `<span class="xo">${OPSYM[it.op]}</span>` : `<span class="xp">${it.k === 'lp' ? '(' : ')'}</span>`);
-  if (!curEmpty(c)) {
+  const tkHtml = (it, i) => it.k === 'v' ? `<span class="tk" data-i="${i}">${it.text}</span>` : it.k === 'op' ? `<span class="xo" data-i="${i}">${OPSYM[it.op]}</span>` : `<span class="xp" data-i="${i}">${it.k === 'lp' ? '(' : ')'}</span>`;
+  const parts = calc.items.map(tkHtml);
+  const editing = !curEmpty(c);
+  if (editing) {
     const colon = c.buf.includes(':');
     const done = colon ? (c.pace ? c.buf + ' /km' : '') : curText(c);
     const pend = colon && c.pace ? '' : c.buf;
     const sfx = !colon && c.order.length && c.buf ? UNIT_ABBR[nextUnitOf(c)] : '';
-    parts.push(`<span class="tk">${done}${done && pend ? ' ' : ''}<span class="pend">${pend}</span>${sfx ? `<span class="sfx">${sfx}</span>` : ''}</span>`);
+    parts.push(`<span class="tk${calc.tail.length ? ' cur' : ''}">${done}${done && pend ? ' ' : ''}<span class="pend">${pend}</span>${sfx ? `<span class="sfx">${sfx}</span>` : ''}</span>`);
+  }
+  if (calc.tail.length) {
+    if (!editing) parts.push('<span class="caret"></span>');
+    const base = calc.items.length + (editing ? 1 : 0);
+    calc.tail.forEach((it, j) => parts.push(tkHtml(it, base + j)));
   }
   box.innerHTML = parts.length ? parts.join('')
     : calc.done && calc.last ? `<span class="muted">${calc.last.text} =</span>`
     : '<span class="zero">0</span>';
-  box.scrollTop = box.scrollHeight;
+  const car = box.querySelector('.caret, .cur');
+  if (calc.tail.length && car) car.scrollIntoView({ block: 'nearest' }); else box.scrollTop = box.scrollHeight;
 }
+$('#expr').addEventListener('click', e => {
+  openHist(false);
+  let t = e.target.closest('[data-i]'), left = false;
+  if (!t) {                                        // tocco tra due elementi: vince il più vicino, se è davvero vicino
+    let best = 28;
+    $('#expr').querySelectorAll('[data-i]').forEach(n => {
+      const r = n.getBoundingClientRect();
+      const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right), dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+      const d = Math.hypot(dx, dy); if (d < best) { best = d; t = n; }
+    });
+  }
+  calc.done = false; calc.err = '';
+  if (!t) {                                        // tocco nel vuoto: il cursore torna in fondo
+    if (calc.tail.length) { const L = calc.items.concat(closeCur(calc.cur) || [], calc.tail); calc.cur = newCur(); calc.items = L; calc.tail = []; renderCalc(); }
+    return;
+  }
+  const r = t.getBoundingClientRect(); left = e.clientX < r.left + r.width * (t.classList.contains('tk') ? 0.3 : 0.5);
+  moveCaret(calc, +t.dataset.i, left ? 'l' : 'r'); renderCalc();
+});
 function renderHistory() {
   const h = calc.history;
   $('#hist').innerHTML = h.length

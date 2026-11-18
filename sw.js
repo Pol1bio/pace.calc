@@ -1,5 +1,5 @@
 // Cambia VERSION quando pubblichi una nuova versione dell'app: gli utenti la ricevono alla visita successiva.
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'calcolatore-passo-' + VERSION;
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
