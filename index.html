@@ -584,7 +584,7 @@ function renderHistory() {
     ? h.map((e, i) => `<button type="button" class="hrow" data-hist="${i}"><span class="ht">${e.text}</span><b>= ${formatRes(e.res)}</b></button>`).join('')
     : '<p class="hint" style="padding:12px 0">Nessun calcolo</p>';
 }
-function renderCalc() { renderResult(); renderExpr(); renderHistory(); }
+function renderCalc() { renderResult(); renderExpr(); renderHistory(); if (typeof saveCalc === 'function') saveCalc(); }
 const panel = $('#hist-panel');
 function openHist(open) { panel.hidden = !open; if (open) renderHistory(); }
 $('#pad').addEventListener('click', e => {
@@ -598,8 +598,24 @@ $('#hist').addEventListener('click', e => {
   const b = e.target.closest('button[data-hist]'); if (!b) return;
   calc.done = false; pressAns(calc, calc.history[+b.dataset.hist].res); openHist(false); renderCalc();
 });
-// esempio iniziale: 3 km a 5:25/km più 2 km a 5:10/km
-'3 u:km op:* 5 : 2 5 pace op:+ 2 u:km op:* 5 : 1 0 pace'.split(' ').forEach(k => applyKey(calc, k));
+// Memoria: l'espressione, l'ultimo risultato e la cronologia restano salvati sul dispositivo
+const SAVE_KEY = 'passo-calc-v1';
+function saveCalc() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ items: calc.items, tail: calc.tail, cur: calc.cur, last: calc.last, history: calc.history })); } catch (e) {}
+}
+function loadCalc() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (!d || !Array.isArray(d.items) || !Array.isArray(d.tail) || !Array.isArray(d.history) || !d.cur) return false;
+    calc.items = d.items; calc.tail = d.tail; calc.cur = { ...newCur(), ...d.cur }; calc.last = d.last || null; calc.history = d.history.slice(0, 8);
+    preview(calc);                                   // se i dati sono rovinati, lancia e si riparte da zero
+    renderHistory();
+    return true;
+  } catch (e) { Object.assign(calc, newCalc()); return false; }
+}
+if (!loadCalc()) {                                   // primo avvio: esempio di 3 km a 5:25/km più 2 km a 5:10/km
+  '3 u:km op:* 5 : 2 5 pace op:+ 2 u:km op:* 5 : 1 0 pace'.split(' ').forEach(k => applyKey(calc, k));
+}
 renderCalc();
 
 // Passo <-> velocità, equivalenti in miglia e tabella delle distanze
